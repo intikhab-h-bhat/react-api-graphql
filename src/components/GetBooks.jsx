@@ -1,5 +1,6 @@
 import React,{useState} from 'react'
 import { useQuery,gql,useMutation } from '@apollo/client'
+import AddBooks from './AddBooks';
 
 // Ensure field name matches the backend
 const GET_BOOKS = gql`
@@ -12,48 +13,72 @@ const GET_BOOKS = gql`
   }
 `;
 
-const ADD_BOOK = gql`
-  mutation AddBook($title: String!, $author: String!) {
-    addBook(title: $title, author: $author) {
-      id
-      title
-      author
-    }
-  }
-`;
+const DELETE_BOOK=gql`
+mutation DeleteBook($id:Int!){
+deleteBook(id:$id)
 
-export default function GetBooks(){
+}
+`
+
+
+
+export default function GetBooks({ setBook }){
+
+
 
 const {loading,data,error}=useQuery(GET_BOOKS)
-
+const [deleteBook] = useMutation(DELETE_BOOK, {
+  refetchQueries: [{ query: GET_BOOKS }],
+  onCompleted: () => {
+    alert("Book deleted successfully!");
+  },
+  onError: (err) => {
+    alert(`Error deleting book: ${err.message}`);
+  },
+});
 
 if (loading) return <p>loading......</p>
 if(error) return <p>Error:{error.message}</p>
 
-
-
-
-
 //console.log(data)
 
 const allbooks=data.books.map(b=>(
-    <li key={b.id}>{b.title}</li>
+  <tr key={b.id}>
+      <td>{b.title}</td>
+      <td>{b.author}</td>
+     <td><button onClick={()=>deleteBook({ variables: { id: b.id } })}>Delete</button></td>
+      <td><button onClick={()=>handleEdit(b)}>Edit</button></td>
+  </tr>
+
 ))
+//Edit
+const handleEdit=(books)=>{
+  setBook(books)
+
+}
+
+
 
 return(
-    <div>
+    <div className='table-container'>
     <h1>Books List</h1>
-    <ul>
+   <table>
+    <thead>
+    <tr>
+    <td>Title</td>
+    <td>Author</td>
+    <td>Delete</td>
+    <td>Edit</td>
+    </tr>
+
+    </thead>
+    <tbody>
       {
         allbooks
-    //   data.books.map((book) => (
-    //     <li key={book.id}>
-    //       <strong>{book.title}</strong> by {book.author}
-    //     </li>
-    //   ))
+   
       }
-    </ul>
-
+ </tbody>
+ </table>
    
   </div>
 )
